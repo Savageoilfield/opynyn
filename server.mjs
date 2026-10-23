@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -7,6 +8,9 @@ import { json, fail, escapeHtml, validId, clean, voter, body, sameOrigin } from 
 import { handleAdmin } from './admin-routes.mjs';
 
 const publicDir = resolve('public');
+const assetVersion = createHash('sha256')
+  .update(['styles.css', 'app.js', 'admin.js'].map(file => readFileSync(join(publicDir, file))).join(''))
+  .digest('hex').slice(0, 12);
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '127.0.0.1';
 
@@ -25,7 +29,8 @@ async function handler(req, res) {
       res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
       return res.end(readFileSync(join(publicDir, file)));
     }
-    let html = readFileSync(join(publicDir, path === '/admin' ? 'admin.html' : 'index.html'), 'utf8');
+    let html = readFileSync(join(publicDir, path === '/admin' ? 'admin.html' : 'index.html'), 'utf8')
+      .replaceAll('{{ASSET_VERSION}}', assetVersion);
     if (path === '/') {
       const current = ensureEdition();
       const requestedId = validId(url.searchParams.get('q'));
