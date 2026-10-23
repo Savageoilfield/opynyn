@@ -68,6 +68,32 @@ function commentNode(comment, byId) {
     reply.addEventListener('click', () => { $('#parent-id').value = comment.id; $('#reply-context').textContent = `Replying to ${comment.name} · cancel reply`; $('#reply-context').hidden = false; $('#comment-body').focus(); });
     article.append(reply);
   }
+  const report = el('details', 'report-control');
+  const summary = el('summary', '', 'Report');
+  const form = el('form', 'report-form');
+  const reason = el('select');
+  reason.setAttribute('aria-label', 'Reason for reporting this comment');
+  for (const [value, label] of [['spam','Spam'],['abuse','Abuse or harassment'],['privacy','Personal information'],['other','Other concern']]) {
+    const option = el('option', '', label);
+    option.value = value;
+    reason.append(option);
+  }
+  const send = el('button', 'small-button', 'Send report');
+  send.type = 'submit';
+  form.append(reason, send);
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    send.disabled = true;
+    try {
+      await api(`/api/comments/${comment.id}/reports`, { method:'POST', body:JSON.stringify({ reason:reason.value }) });
+      report.replaceWith(el('span', 'report-confirmation', 'Report received.'));
+    } catch (error) {
+      send.disabled = false;
+      send.textContent = error.message;
+    }
+  });
+  report.append(summary, form);
+  article.append(report);
   return article;
 }
 

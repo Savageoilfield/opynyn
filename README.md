@@ -1,6 +1,6 @@
 # Opynyn
 
-A daily question site for sharing on social media. Visitors pick one of two positions, see the vote, and discuss their reasoning. The admin portal lets you review aggregate activity, queue questions, and remove comments. See [ROADMAP.md](ROADMAP.md) for privacy, data licensing, and AdSense goals.
+A daily question site for sharing on social media. Visitors pick one of two positions, see the vote, and discuss their reasoning. Visitors can report concerning comments; the admin portal provides a report queue, hide/restore moderation, question editing, aggregate daily summaries, and an activity log. See [ROADMAP.md](ROADMAP.md) for privacy, data licensing, and AdSense goals.
 
 ## Run on Windows
 

@@ -9,7 +9,8 @@ import { handleAdmin } from './admin-routes.mjs';
 
 const publicDir = resolve('public');
 const assetVersion = createHash('sha256')
-  .update(['styles.css', 'app.js', 'admin.js'].map(file => readFileSync(join(publicDir, file))).join(''))
+  .update(['styles.css', 'app.js', 'admin.js', 'admin-tools.js', 'admin-common.js']
+    .map(file => readFileSync(join(publicDir, file))).join(''))
   .digest('hex').slice(0, 12);
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '127.0.0.1';
@@ -17,7 +18,9 @@ const host = process.env.HOST || '127.0.0.1';
 const assets = {
   '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
-  '/admin.js': ['admin.js', 'text/javascript; charset=utf-8']
+  '/admin.js': ['admin.js', 'text/javascript; charset=utf-8'],
+  '/admin-tools.js': ['admin-tools.js', 'text/javascript; charset=utf-8'],
+  '/admin-common.js': ['admin-common.js', 'text/javascript; charset=utf-8']
 };
 
 async function handler(req, res) {
@@ -44,7 +47,7 @@ async function handler(req, res) {
   }
   if (req.method === 'GET' && path === '/health') return json(res, 200, { ok:true });
   if (!path.startsWith('/api/')) return fail(res, 404, 'Not found');
-  if (!['GET','POST','DELETE'].includes(req.method)) return fail(res, 405, 'Method not allowed');
+  if (!['GET','POST','PATCH','DELETE'].includes(req.method)) return fail(res, 405, 'Method not allowed');
   if (req.method !== 'GET' && (!sameOrigin(req) || !String(req.headers['content-type'] || '').startsWith('application/json'))) return fail(res, 403, 'Invalid request origin or content type');
   if (path.startsWith('/api/admin/')) return handleAdmin(req, res, path);
   const voterId = voter(req, res);
@@ -77,7 +80,7 @@ async function handler(req, res) {
     if (!q) return fail(res, 404, 'Question not found');
     if (req.method === 'GET') {
       const rows = db.prepare(`SELECT id,parent_id AS parentId,name,stance,body,created_at AS createdAt
-        FROM comments WHERE question_id=? ORDER BY id ASC LIMIT 500`).all(id);
+        FROM comments WHERE question_id=? AND status='visible' ORDER BY id ASC LIMIT 500`).all(id);
       return json(res, 200, { comments:rows });
     }
     if (req.method === 'POST') {
@@ -86,12 +89,23 @@ async function handler(req, res) {
       const name = clean(input.name, 32), message = clean(input.body, 1000);
       const stance = input.stance, parentId = input.parentId == null ? null : validId(input.parentId);
       if (!name || name.length > 32 || message.length < 3 || message.length > 1000 || !['a','b','unsure'].includes(stance)) return fail(res, 400, 'Enter a name, stance, and comment (3–1000 characters)');
-      if (input.parentId != null && (!parentId || !db.prepare('SELECT id FROM comments WHERE id=? AND question_id=?').get(parentId, id))) return fail(res, 400, 'Invalid reply');
+      if (input.parentId != null && (!parentId || !db.prepare("SELECT id FROM comments WHERE id=? AND question_id=? AND status='visible'").get(parentId, id))) return fail(res, 400, 'Invalid reply');
       const recent = db.prepare(`SELECT created_at FROM comments WHERE voter_id=? ORDER BY id DESC LIMIT 1`).get(voterId);
       if (recent && Date.now() - Date.parse(`${recent.created_at}Z`) < 30000) return fail(res, 429, 'Wait 30 seconds before posting again');
       db.prepare('INSERT INTO comments(question_id,parent_id,voter_id,name,stance,body) VALUES(?,?,?,?,?,?)').run(id, parentId, voterId, name, stance, message);
       return json(res, 201, { ok:true });
     }
+  }
+  const reportMatch = /^\/api\/comments\/(\d+)\/reports$/.exec(path);
+  if (req.method === 'POST' && reportMatch) {
+    const commentId = validId(reportMatch[1]);
+    const comment = db.prepare("SELECT id FROM comments WHERE id=? AND status='visible'").get(commentId);
+    if (!comment) return fail(res, 404, 'Comment not found');
+    const input = await body(req);
+    if (!['spam','abuse','privacy','other'].includes(input.reason)) return fail(res, 400, 'Choose a report reason');
+    const result = db.prepare('INSERT OR IGNORE INTO comment_reports(comment_id,voter_id,reason) VALUES(?,?,?)')
+      .run(commentId, voterId, input.reason);
+    return json(res, result.changes ? 201 : 200, { ok:true, alreadyReported:!result.changes });
   }
   return fail(res, 404, 'Not found');
 }

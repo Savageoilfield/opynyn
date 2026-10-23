@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f4f1e9">
   <title>Admin · Opynyn</title>
   <link rel="stylesheet" href="/styles.css?v={{ASSET_VERSION}}">
-  <script defer src="/admin.js?v={{ASSET_VERSION}}"></script>
+  <script type="module" src="/admin.js?v={{ASSET_VERSION}}"></script>
 </head>
 <body>
   <div class="site-shell">
@@ -49,14 +49,22 @@
         </section>
 
         <div id="admin-content" hidden>
+          <p id="admin-message" class="form-message" role="status"></p>
           <section aria-labelledby="overview-title">
-            <h2 id="overview-title">At a glance</h2>
+            <div class="admin-section-head"><div><div class="eyebrow"><span class="tiny-rule"></span> OPERATIONS</div><h2 id="overview-title">At a glance</h2></div><a class="text-link" href="/api/admin/summary.csv">Download aggregate CSV ↗</a></div>
             <div class="stats-grid" id="stats-grid"></div>
+            <p class="admin-hint">The CSV contains daily question totals and visible-comment counts, with no voter identifiers.</p>
+            <h3 class="admin-subheading">Recent debates</h3><div id="summary-list" class="admin-list"></div>
+          </section>
+          <section class="admin-section" aria-labelledby="reports-title">
+            <div class="admin-section-head"><div><div class="eyebrow"><span class="tiny-rule"></span> TRIAGE</div><h2 id="reports-title">Reports to review</h2></div><select id="report-filter" aria-label="Filter reports"><option value="open">Open reports</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option><option value="all">All reports</option></select></div>
+            <div id="report-list" class="admin-list"></div>
           </section>
           <section class="admin-grid">
             <div class="comment-panel">
-              <h2>Queue a question</h2>
+              <h2 id="question-form-title">Queue a question</h2>
               <form id="question-form">
+                <input id="edit-question-id" type="hidden">
                 <label for="prompt">QUESTION</label>
                 <textarea id="prompt" maxlength="240" rows="3" required placeholder="Should cities make public transit free?"></textarea>
                 <label for="option-a">SIDE A</label>
@@ -65,16 +73,17 @@
                 <input id="option-b" maxlength="80" required placeholder="No, riders should pay">
                 <label for="scheduled-date">SPECIFIC DAY (OPTIONAL)</label>
                 <input id="scheduled-date" type="date">
-                <div class="form-footer"><span>Unscheduled questions run in queue order.</span><button class="primary-button">Add to queue ↗</button></div>
+                <div class="form-footer"><span>Unscheduled questions run in queue order.</span><div class="admin-actions"><button class="text-link" id="cancel-question-edit" type="button" hidden>Cancel edit</button><button class="primary-button" id="save-question-button">Add to queue ↗</button></div></div>
                 <p class="form-message" id="question-message" role="status"></p>
               </form>
             </div>
             <div><h2>Question queue</h2><div id="question-list" class="admin-list"></div></div>
           </section>
-          <section class="admin-comments">
-            <div class="section-heading"><div><div class="eyebrow"><span class="tiny-rule"></span> MODERATION</div><h2>Recent comments<span class="accent">.</span></h2></div></div>
+          <section class="admin-comments" aria-labelledby="comments-title">
+            <div class="admin-section-head"><div><div class="eyebrow"><span class="tiny-rule"></span> MODERATION</div><h2 id="comments-title">Comments<span class="accent">.</span></h2></div><div class="admin-filters"><input id="comment-search" type="search" placeholder="Search comments" aria-label="Search comments"><select id="comment-filter" aria-label="Filter comments"><option value="all">All comments</option><option value="visible">Visible</option><option value="hidden">Hidden</option></select></div></div>
             <div id="moderation-list" class="admin-list"></div>
           </section>
+          <section class="admin-section" aria-labelledby="activity-title"><div class="admin-section-head"><div><div class="eyebrow"><span class="tiny-rule"></span> ACCOUNTABILITY</div><h2 id="activity-title">Recent admin activity</h2></div></div><div id="activity-list" class="admin-list"></div></section>
           <button class="text-link change-password-link" id="show-password-button" type="button">Change password</button>
         </div>
       </div>

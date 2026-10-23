@@ -6,10 +6,10 @@ This is a working plan, not a declaration that any data sale or ad use is legall
 
 - [x] Publish a daily question, accept one vote per browser cookie, and show results.
 - [x] Let visitors comment and reply; retain past debates.
-- [x] Provide an account-based admin portal for question scheduling, comment removal, and aggregate activity counts.
+- [x] Provide an account-based admin portal for question editing and scheduling, comment moderation, and aggregate activity counts.
 - [x] Require the first admin to replace a generated temporary password.
-- [ ] Add multiple admin roles, audit logs, and a recovery process.
-- [ ] Add reporting of abusive comments and a moderation queue before public launch.
+- [x] Add visitor reporting, a moderation queue, hide/restore controls, and an admin activity log.
+- [ ] Add multiple admin roles and an account recovery process.
 - [ ] Add backups, restore tests, monitoring, and automated deployment.
 
 ## Goal 2 — Measure useful activity with minimal personal data

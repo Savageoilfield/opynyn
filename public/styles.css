@@ -439,6 +439,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   font-size:12px;
   font-weight:700
 }
+.report-control {
+  display:inline-block;
+  margin:0 0 0 18px;
+  color:var(--muted);
+  font-size:12px
+}
+.report-control summary {
+  cursor:pointer;
+  font-weight:700
+}
+.report-form {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px
+}
+.report-form select,.small-button {
+  border:1px solid var(--line);
+  background:var(--white);
+  padding:8px;
+  color:var(--ink)
+}
+.report-confirmation {
+  color:var(--green);
+  font-size:12px;
+  margin-left:18px
+}
 .empty {
   color:var(--muted);
   line-height:1.6
@@ -538,8 +565,52 @@ footer span {
 }
 .stats-grid {
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:14px
+}
+.admin-section {
+  margin-top:80px
+}
+.admin-section-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:24px;
+  margin-bottom:22px
+}
+.admin-section-head h2 {
+  font:600 clamp(31px,3.4vw,48px)/1.1 'Playfair Display',Georgia,serif;
+  margin:12px 0 0
+}
+.admin-hint {
+  color:var(--muted);
+  font-size:12px;
+  margin:16px 0 30px
+}
+.admin-subheading {
+  font:600 24px/1.2 'Playfair Display',Georgia,serif;
+  margin:0 0 15px
+}
+.admin-filters,.admin-actions {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px
+}
+.admin-section-head select,.admin-filters input {
+  border:1px solid var(--line);
+  background:var(--white);
+  padding:11px 12px;
+  color:var(--ink);
+  font:inherit
+}
+.admin-item-text {
+  min-width:0;
+  overflow-wrap:anywhere
+}
+.admin-item .admin-actions {
+  justify-content:flex-end;
+  flex-shrink:0
 }
 .stat-card {
   background:var(--green);
@@ -589,7 +660,8 @@ footer span {
 .admin-item small {
   color:var(--muted);
   display:block;
-  margin-top:5px
+  margin-top:5px;
+  line-height:1.5
 }
 .danger-button {
   border:1px solid #bd8577;
@@ -608,6 +680,18 @@ footer span {
 @media(max-width:800px) {
   .stats-grid {
     grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .admin-section-head {
+    display:block
+  }
+  .admin-section-head>.admin-filters,.admin-section-head>select,.admin-section-head>.text-link {
+    margin-top:16px
+  }
+  .admin-item {
+    flex-wrap:wrap
+  }
+  .admin-item .admin-actions {
+    justify-content:flex-start
   }
   .site-shell {
     padding:0 5%

@@ -61,6 +61,28 @@ db.exec(`PRAGMA journal_mode=WAL;
     expires_at INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS admin_sessions_expiry_idx ON admin_sessions(expires_at);`);
+if (!db.prepare('PRAGMA table_info(comments)').all().some(column => column.name === 'status')) {
+  db.exec("ALTER TABLE comments ADD COLUMN status TEXT NOT NULL DEFAULT 'visible' CHECK(status IN ('visible','hidden'))");
+}
+db.exec(`CREATE INDEX IF NOT EXISTS comments_status_idx ON comments(status, created_at);
+  CREATE TABLE IF NOT EXISTS comment_reports (
+    id INTEGER PRIMARY KEY,
+    comment_id INTEGER NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+    voter_id TEXT NOT NULL,
+    reason TEXT NOT NULL CHECK(reason IN ('spam','abuse','privacy','other')),
+    status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','resolved','dismissed')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(comment_id,voter_id)
+  );
+  CREATE INDEX IF NOT EXISTS reports_status_idx ON comment_reports(status, created_at);
+  CREATE TABLE IF NOT EXISTS admin_activity (
+    id INTEGER PRIMARY KEY,
+    admin_id INTEGER NOT NULL REFERENCES admins(id),
+    action TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    target_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
 if (db.prepare('SELECT count(*) AS n FROM questions').get().n === 0) {
   const insert = db.prepare('INSERT INTO questions(prompt, option_a, option_b) VALUES(?, ?, ?)');
   for (const q of starterQuestions) insert.run(...q);
@@ -99,7 +121,7 @@ function questionView(q, voterId) {
     sum(CASE WHEN choice='b' THEN 1 ELSE 0 END) AS b
     FROM votes WHERE question_id=?`).get(q.id);
   const mine = voterId ? db.prepare('SELECT choice FROM votes WHERE question_id=? AND voter_id=?').get(q.id, voterId) : null;
-  const commentCount = db.prepare('SELECT count(*) AS n FROM comments WHERE question_id=?').get(q.id).n;
+  const commentCount = db.prepare("SELECT count(*) AS n FROM comments WHERE question_id=? AND status='visible'").get(q.id).n;
   return { id:q.id, day:q.day, prompt:q.prompt, options:{ a:q.option_a, b:q.option_b }, votes:{ a:counts.a || 0, b:counts.b || 0, total:counts.total }, myVote:mine?.choice || null, commentCount };
 }
 
