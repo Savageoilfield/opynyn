@@ -1,6 +1,5 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
-const adminKey = process.env.ADMIN_KEY || '';
 const json = (res, status, value, headers = {}) => {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
   res.end(JSON.stringify(value));
@@ -19,14 +18,6 @@ function voter(req, res) {
   return id;
 }
 
-function isAdmin(req) {
-  if (adminKey.length < 24) return false;
-  const supplied = req.headers['x-admin-key'];
-  if (typeof supplied !== 'string') return false;
-  const a = Buffer.from(supplied), b = Buffer.from(adminKey);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 async function body(req) {
   let data = '';
   for await (const part of req) {
@@ -42,4 +33,4 @@ function sameOrigin(req) {
   try { return new URL(origin).host === req.headers.host; } catch { return false; }
 }
 
-export { adminKey, json, fail, escapeHtml, validId, clean, voter, isAdmin, body, sameOrigin };
+export { json, fail, escapeHtml, validId, clean, voter, body, sameOrigin };

@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { db, ensureEdition, questionView, today, timezone } from './db.mjs';
-import { adminKey, json, fail, escapeHtml, validId, clean, voter, isAdmin, body, sameOrigin } from './http-utils.mjs';
+import { json, fail, escapeHtml, validId, clean, voter, body, sameOrigin } from './http-utils.mjs';
+import { handleAdmin } from './admin-routes.mjs';
 
 const publicDir = resolve('public');
 const port = Number(process.env.PORT || 3000);
@@ -40,6 +41,7 @@ async function handler(req, res) {
   if (!path.startsWith('/api/')) return fail(res, 404, 'Not found');
   if (!['GET','POST','DELETE'].includes(req.method)) return fail(res, 405, 'Method not allowed');
   if (req.method !== 'GET' && (!sameOrigin(req) || !String(req.headers['content-type'] || '').startsWith('application/json'))) return fail(res, 403, 'Invalid request origin or content type');
+  if (path.startsWith('/api/admin/')) return handleAdmin(req, res, path);
   const voterId = voter(req, res);
 
   if (req.method === 'GET' && path === '/api/today') return json(res, 200, { question:questionView(ensureEdition(), voterId), timezone });
@@ -86,37 +88,6 @@ async function handler(req, res) {
       return json(res, 201, { ok:true });
     }
   }
-  if (path.startsWith('/api/admin/')) {
-    if (!isAdmin(req)) return fail(res, 401, 'Invalid admin key');
-    if (req.method === 'GET' && path === '/api/admin/questions') {
-      const rows = db.prepare(`SELECT q.*, e.day AS publishedDay FROM questions q LEFT JOIN editions e ON e.question_id=q.id ORDER BY q.id DESC`).all();
-      return json(res, 200, { questions:rows });
-    }
-    if (req.method === 'POST' && path === '/api/admin/questions') {
-      const input = await body(req);
-      const prompt = clean(input.prompt, 240), a = clean(input.optionA, 80), b = clean(input.optionB, 80);
-      const date = input.scheduledDate || null;
-      if (prompt.length < 10 || prompt.length > 240 || !a || a.length > 80 || !b || b.length > 80 || (date && !/^\d{4}-\d{2}-\d{2}$/.test(date))) return fail(res, 400, 'Enter a question and two short choices');
-      if (date && db.prepare('SELECT id FROM questions WHERE scheduled_date=?').get(date)) return fail(res, 409, 'That date already has a scheduled question');
-      const result = db.prepare('INSERT INTO questions(prompt,option_a,option_b,scheduled_date) VALUES(?,?,?,?)').run(prompt,a,b,date);
-      return json(res, 201, { id:Number(result.lastInsertRowid) });
-    }
-    const removeQ = /^\/api\/admin\/questions\/(\d+)$/.exec(path);
-    if (req.method === 'DELETE' && removeQ) {
-      const result = db.prepare('DELETE FROM questions WHERE id=? AND id NOT IN (SELECT question_id FROM editions)').run(validId(removeQ[1]));
-      return result.changes ? json(res, 200, { ok:true }) : fail(res, 409, 'Only unpublished questions can be removed');
-    }
-    if (req.method === 'GET' && path === '/api/admin/comments') {
-      const rows = db.prepare(`SELECT c.id,c.name,c.body,c.created_at AS createdAt,q.prompt
-        FROM comments c JOIN questions q ON q.id=c.question_id ORDER BY c.id DESC LIMIT 100`).all();
-      return json(res, 200, { comments:rows });
-    }
-    const removeC = /^\/api\/admin\/comments\/(\d+)$/.exec(path);
-    if (req.method === 'DELETE' && removeC) {
-      const result = db.prepare('DELETE FROM comments WHERE id=?').run(validId(removeC[1]));
-      return result.changes ? json(res, 200, { ok:true }) : fail(res, 404, 'Comment not found');
-    }
-  }
   return fail(res, 404, 'Not found');
 }
 
@@ -131,6 +102,5 @@ export function createServer() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  if (adminKey.length < 24) console.warn('Set ADMIN_KEY to a random value of at least 24 characters to enable admin tools.');
   createServer().listen(port, host, () => console.log(`Opynyn listening on http://localhost:${port}`));
 }

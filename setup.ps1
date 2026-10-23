@@ -1,13 +1,8 @@
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 if (-not (Test-Path -LiteralPath '.env')) {
-  $bytes = [byte[]]::new(32)
-  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-  $rng.GetBytes($bytes)
-  $rng.Dispose()
-  $key = [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant()
-  @("ADMIN_KEY=$key", 'TZ=America/Edmonton', 'PORT=3000', 'PUBLIC_URL=') | Set-Content -LiteralPath '.env' -Encoding ascii
-  Write-Host 'Created .env with a private admin key.'
+  @('TZ=America/Edmonton', 'PORT=3000', 'PUBLIC_URL=') | Set-Content -LiteralPath '.env' -Encoding ascii
+  Write-Host 'Created .env with local settings.'
 }
 if (Get-Command docker -ErrorAction SilentlyContinue) {
   docker compose up -d --build
@@ -19,16 +14,15 @@ if (Get-Command docker -ErrorAction SilentlyContinue) {
   Get-Content -LiteralPath '.env' | ForEach-Object {
     if ($_ -match '^([^#=]+)=(.*)$') { $settings[$matches[1]] = $matches[2] }
   }
-  $env:ADMIN_KEY = $settings['ADMIN_KEY']
   $env:TZ = $settings['TZ']
   $env:PORT = $settings['PORT']
   $env:HOST = '127.0.0.1'
   $env:DATA_DIR = Join-Path $PSScriptRoot 'data'
   Write-Host 'Docker is unavailable; running with Node in this PowerShell window. Press Ctrl+C to stop.'
-  Write-Host 'Open http://localhost:3000 (admin: http://localhost:3000/admin). The private admin key is in .env.'
+  Write-Host 'Open http://localhost:3000 (admin: http://localhost:3000/admin).'
   node server.mjs
   exit $LASTEXITCODE
 }
 Write-Host 'Open http://localhost:3000'
 Write-Host 'Admin page: http://localhost:3000/admin'
-Write-Host 'Your admin key is in .env. Keep it private.'
+Write-Host 'Admin accounts live in data/opynyn.db.'

@@ -1,85 +1,83 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f4f1e9">
-<title>Manage Opynyn</title>
-<link rel="stylesheet" href="/styles.css">
-<script defer src="/admin.js">
-</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1e9">
+  <title>Admin · Opynyn</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/admin.js"></script>
 </head>
 <body>
-<div class="site-shell">
-<header class="masthead">
-<a class="logo" href="/">opynyn<span class="logo-dot">.</span>
-</a>
-<a class="nav-link" href="/">← Back to the debate</a>
-</header>
-<main class="admin-page">
-<div class="eyebrow">
-<span class="tiny-rule">
-</span> EDITOR'S DESK</div>
-<h1>Keep the conversation <em>going.</em>
-</h1>
-<p class="admin-intro">Add questions to the queue, plan a specific day, and remove comments when needed.</p>
-<section class="admin-login" id="login-panel">
-<label for="admin-key">ADMIN KEY</label>
-<div class="login-line">
-<input id="admin-key" type="password" autocomplete="off" placeholder="Paste your key from .env">
-<button id="login-button" class="primary-button">Open dashboard ↗</button>
-</div>
-<p class="form-message" id="login-message" role="status">
-</p>
-</section>
-<div id="dashboard" hidden>
-<section class="admin-grid">
-<div class="comment-panel">
-<h2>Queue a question</h2>
-<form id="question-form">
-<label for="prompt">QUESTION</label>
-<textarea id="prompt" maxlength="240" rows="3" required placeholder="Should cities make public transit free?">
-</textarea>
-<label for="option-a">SIDE A</label>
-<input id="option-a" maxlength="80" required placeholder="Yes, fund it publicly">
-<label for="option-b">SIDE B</label>
-<input id="option-b" maxlength="80" required placeholder="No, riders should pay">
-<label for="scheduled-date">SPECIFIC DAY (OPTIONAL)</label>
-<input id="scheduled-date" type="date">
-<div class="form-footer">
-<span>Unscheduled questions run in queue order.</span>
-<button class="primary-button">Add to queue ↗</button>
-</div>
-<p class="form-message" id="question-message" role="status">
-</p>
-</form>
-</div>
-<div>
-<h2>Question queue</h2>
-<div id="question-list" class="admin-list">
-</div>
-</div>
-</section>
-<section class="admin-comments">
-<div class="section-heading">
-<div>
-<div class="eyebrow">
-<span class="tiny-rule">
-</span> MODERATION</div>
-<h2>Recent comments<span class="accent">.</span>
-</h2>
-</div>
-</div>
-<div id="moderation-list" class="admin-list">
-</div>
-</section>
-</div>
-</main>
-<footer>
-<a class="logo" href="/">opynyn<span class="logo-dot">.</span>
-</a>
-<span>ONE QUESTION. EVERY DAY.</span>
-</footer>
-</div>
+  <div class="site-shell">
+    <header class="masthead">
+      <a class="logo" href="/" aria-label="Opynyn home">opynyn<span class="logo-dot">.</span></a>
+      <a class="nav-link" href="/">← Back to the debate</a>
+    </header>
+    <main class="admin-page">
+      <div class="eyebrow"><span class="tiny-rule"></span> EDITOR'S DESK</div>
+      <h1>Keep the conversation <em>going.</em></h1>
+      <p class="admin-intro">Plan questions, review activity, and moderate the discussion.</p>
+
+      <section class="admin-login" id="login-panel" aria-labelledby="login-title">
+        <h2 id="login-title">Sign in</h2>
+        <form id="login-form">
+          <label for="username">USERNAME</label>
+          <input id="username" name="username" autocomplete="username" required>
+          <label for="password">PASSWORD</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <div class="form-footer"><span>Use the account created on this machine.</span><button class="primary-button">Sign in ↗</button></div>
+          <p class="form-message" id="login-message" role="status"></p>
+        </form>
+      </section>
+
+      <div id="dashboard" hidden>
+        <div class="admin-toolbar"><span id="signed-in-as"></span><button class="text-link" id="logout-button" type="button">Sign out</button></div>
+        <section class="password-panel comment-panel" id="password-panel" hidden aria-labelledby="password-title">
+          <h2 id="password-title">Change your password</h2>
+          <p id="password-help">Your temporary password must be changed before using the dashboard.</p>
+          <form id="password-form">
+            <label for="current-password">CURRENT PASSWORD</label>
+            <input id="current-password" type="password" autocomplete="current-password" required>
+            <label for="new-password">NEW PASSWORD (AT LEAST 12 CHARACTERS)</label>
+            <input id="new-password" type="password" autocomplete="new-password" minlength="12" required>
+            <div class="form-footer"><span>Use a unique password.</span><button class="primary-button">Save password ↗</button></div>
+            <p class="form-message" id="password-message" role="status"></p>
+          </form>
+        </section>
+
+        <div id="admin-content" hidden>
+          <section aria-labelledby="overview-title">
+            <h2 id="overview-title">At a glance</h2>
+            <div class="stats-grid" id="stats-grid"></div>
+          </section>
+          <section class="admin-grid">
+            <div class="comment-panel">
+              <h2>Queue a question</h2>
+              <form id="question-form">
+                <label for="prompt">QUESTION</label>
+                <textarea id="prompt" maxlength="240" rows="3" required placeholder="Should cities make public transit free?"></textarea>
+                <label for="option-a">SIDE A</label>
+                <input id="option-a" maxlength="80" required placeholder="Yes, fund it publicly">
+                <label for="option-b">SIDE B</label>
+                <input id="option-b" maxlength="80" required placeholder="No, riders should pay">
+                <label for="scheduled-date">SPECIFIC DAY (OPTIONAL)</label>
+                <input id="scheduled-date" type="date">
+                <div class="form-footer"><span>Unscheduled questions run in queue order.</span><button class="primary-button">Add to queue ↗</button></div>
+                <p class="form-message" id="question-message" role="status"></p>
+              </form>
+            </div>
+            <div><h2>Question queue</h2><div id="question-list" class="admin-list"></div></div>
+          </section>
+          <section class="admin-comments">
+            <div class="section-heading"><div><div class="eyebrow"><span class="tiny-rule"></span> MODERATION</div><h2>Recent comments<span class="accent">.</span></h2></div></div>
+            <div id="moderation-list" class="admin-list"></div>
+          </section>
+          <button class="text-link change-password-link" id="show-password-button" type="button">Change password</button>
+        </div>
+      </div>
+    </main>
+    <footer><a class="logo" href="/">opynyn<span class="logo-dot">.</span></a><span>ONE QUESTION. EVERY DAY.</span></footer>
+  </div>
 </body>
 </html>

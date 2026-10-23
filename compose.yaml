@@ -4,7 +4,6 @@ services:
     ports:
       - "127.0.0.1:${PORT:-3000}:3000"
     environment:
-      ADMIN_KEY: ${ADMIN_KEY:?Run setup.ps1 to create .env}
       TZ: ${TZ:-America/Edmonton}
       DATA_DIR: /app/data
       PUBLIC_URL: ${PUBLIC_URL:-}

@@ -47,7 +47,20 @@ db.exec(`PRAGMA journal_mode=WAL;
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS comments_question_idx ON comments(question_id, created_at);
-  CREATE INDEX IF NOT EXISTS comments_voter_idx ON comments(voter_id, created_at);`);
+  CREATE INDEX IF NOT EXISTS comments_voter_idx ON comments(voter_id, created_at);
+  CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_salt TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    must_change_password INTEGER NOT NULL DEFAULT 1
+  );
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    token_hash TEXT PRIMARY KEY,
+    admin_id INTEGER NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS admin_sessions_expiry_idx ON admin_sessions(expires_at);`);
 if (db.prepare('SELECT count(*) AS n FROM questions').get().n === 0) {
   const insert = db.prepare('INSERT INTO questions(prompt, option_a, option_b) VALUES(?, ?, ?)');
   for (const q of starterQuestions) insert.run(...q);
