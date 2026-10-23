@@ -62,8 +62,12 @@ test('daily question, voting, comments, and moderation', async t => {
   const temporaryCookie = login.cookie.split(';')[0];
   assert.equal((await request('/api/admin/stats','GET',undefined,temporaryCookie)).status,403);
   const newPassword = 'new-test-password-at-least-12-chars';
+  const mismatch = await request('/api/admin/password','POST',
+    {currentPassword:temporaryPassword,newPassword,confirmPassword:'different-password'},temporaryCookie);
+  assert.equal(mismatch.status,400);
+  assert.equal((await request('/api/admin/me','GET',undefined,temporaryCookie)).body.mustChangePassword,true);
   const changed = await request('/api/admin/password','POST',
-    {currentPassword:temporaryPassword,newPassword},temporaryCookie);
+    {currentPassword:temporaryPassword,newPassword,confirmPassword:newPassword},temporaryCookie);
   assert.equal(changed.status,200);
   const adminCookie = changed.cookie.split(';')[0];
   assert.equal((await request('/api/admin/stats','GET',undefined,temporaryCookie)).status,401);

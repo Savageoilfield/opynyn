@@ -39,6 +39,10 @@ async function handleAdmin(req, res, path) {
   }
   if (req.method === 'POST' && path === '/api/admin/password') {
     const input = await body(req);
+    if (input.newPassword !== input.confirmPassword) {
+      fail(res, 400, 'The new passwords do not match');
+      return true;
+    }
     if (!changePassword(req, res, admin, input.currentPassword, input.newPassword)) {
       fail(res, 400, 'Check your current password and use a new password of at least 12 characters');
     } else json(res, 200, { ok:true });

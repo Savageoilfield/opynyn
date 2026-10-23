@@ -111,9 +111,15 @@ $('#login-form').addEventListener('submit', async event => {
 $('#password-form').addEventListener('submit', async event => {
   event.preventDefault();
   $('#password-message').textContent = '';
+  if ($('#new-password').value !== $('#confirm-password').value) {
+    $('#password-message').textContent = 'The new passwords do not match.';
+    $('#confirm-password').focus();
+    return;
+  }
   try {
     await api('/api/admin/password', { method:'POST', body:JSON.stringify({
-      currentPassword:$('#current-password').value, newPassword:$('#new-password').value
+      currentPassword:$('#current-password').value, newPassword:$('#new-password').value,
+      confirmPassword:$('#confirm-password').value
     }) });
     event.target.reset();
     mustChangePassword = false;
