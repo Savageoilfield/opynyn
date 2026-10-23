@@ -9,8 +9,5 @@ services:
       DATA_DIR: /app/data
       PUBLIC_URL: ${PUBLIC_URL:-}
     volumes:
-      - opynyn_data:/app/data
+      - ./data:/app/data
     restart: unless-stopped
-
-volumes:
-  opynyn_data:

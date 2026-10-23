@@ -1,1 +1,85 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f4f1e9"><title>Manage Opynyn</title><link rel="stylesheet" href="/styles.css"><script defer src="/admin.js"></script></head><body><div class="site-shell"><header class="masthead"><a class="logo" href="/">opynyn<span class="logo-dot">.</span></a><a class="nav-link" href="/">← Back to the debate</a></header><main class="admin-page"><div class="eyebrow"><span class="tiny-rule"></span> EDITOR'S DESK</div><h1>Keep the conversation <em>going.</em></h1><p class="admin-intro">Add questions to the queue, plan a specific day, and remove comments when needed.</p><section class="admin-login" id="login-panel"><label for="admin-key">ADMIN KEY</label><div class="login-line"><input id="admin-key" type="password" autocomplete="off" placeholder="Paste your key from .env"><button id="login-button" class="primary-button">Open dashboard ↗</button></div><p class="form-message" id="login-message" role="status"></p></section><div id="dashboard" hidden><section class="admin-grid"><div class="comment-panel"><h2>Queue a question</h2><form id="question-form"><label for="prompt">QUESTION</label><textarea id="prompt" maxlength="240" rows="3" required placeholder="Should cities make public transit free?"></textarea><label for="option-a">SIDE A</label><input id="option-a" maxlength="80" required placeholder="Yes, fund it publicly"><label for="option-b">SIDE B</label><input id="option-b" maxlength="80" required placeholder="No, riders should pay"><label for="scheduled-date">SPECIFIC DAY (OPTIONAL)</label><input id="scheduled-date" type="date"><div class="form-footer"><span>Unscheduled questions run in queue order.</span><button class="primary-button">Add to queue ↗</button></div><p class="form-message" id="question-message" role="status"></p></form></div><div><h2>Question queue</h2><div id="question-list" class="admin-list"></div></div></section><section class="admin-comments"><div class="section-heading"><div><div class="eyebrow"><span class="tiny-rule"></span> MODERATION</div><h2>Recent comments<span class="accent">.</span></h2></div></div><div id="moderation-list" class="admin-list"></div></section></div></main><footer><a class="logo" href="/">opynyn<span class="logo-dot">.</span></a><span>ONE QUESTION. EVERY DAY.</span></footer></div></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f4f1e9">
+<title>Manage Opynyn</title>
+<link rel="stylesheet" href="/styles.css">
+<script defer src="/admin.js">
+</script>
+</head>
+<body>
+<div class="site-shell">
+<header class="masthead">
+<a class="logo" href="/">opynyn<span class="logo-dot">.</span>
+</a>
+<a class="nav-link" href="/">← Back to the debate</a>
+</header>
+<main class="admin-page">
+<div class="eyebrow">
+<span class="tiny-rule">
+</span> EDITOR'S DESK</div>
+<h1>Keep the conversation <em>going.</em>
+</h1>
+<p class="admin-intro">Add questions to the queue, plan a specific day, and remove comments when needed.</p>
+<section class="admin-login" id="login-panel">
+<label for="admin-key">ADMIN KEY</label>
+<div class="login-line">
+<input id="admin-key" type="password" autocomplete="off" placeholder="Paste your key from .env">
+<button id="login-button" class="primary-button">Open dashboard ↗</button>
+</div>
+<p class="form-message" id="login-message" role="status">
+</p>
+</section>
+<div id="dashboard" hidden>
+<section class="admin-grid">
+<div class="comment-panel">
+<h2>Queue a question</h2>
+<form id="question-form">
+<label for="prompt">QUESTION</label>
+<textarea id="prompt" maxlength="240" rows="3" required placeholder="Should cities make public transit free?">
+</textarea>
+<label for="option-a">SIDE A</label>
+<input id="option-a" maxlength="80" required placeholder="Yes, fund it publicly">
+<label for="option-b">SIDE B</label>
+<input id="option-b" maxlength="80" required placeholder="No, riders should pay">
+<label for="scheduled-date">SPECIFIC DAY (OPTIONAL)</label>
+<input id="scheduled-date" type="date">
+<div class="form-footer">
+<span>Unscheduled questions run in queue order.</span>
+<button class="primary-button">Add to queue ↗</button>
+</div>
+<p class="form-message" id="question-message" role="status">
+</p>
+</form>
+</div>
+<div>
+<h2>Question queue</h2>
+<div id="question-list" class="admin-list">
+</div>
+</div>
+</section>
+<section class="admin-comments">
+<div class="section-heading">
+<div>
+<div class="eyebrow">
+<span class="tiny-rule">
+</span> MODERATION</div>
+<h2>Recent comments<span class="accent">.</span>
+</h2>
+</div>
+</div>
+<div id="moderation-list" class="admin-list">
+</div>
+</section>
+</div>
+</main>
+<footer>
+<a class="logo" href="/">opynyn<span class="logo-dot">.</span>
+</a>
+<span>ONE QUESTION. EVERY DAY.</span>
+</footer>
+</div>
+</body>
+</html>

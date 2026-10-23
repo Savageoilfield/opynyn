@@ -1,134 +1,13 @@
 import http from 'node:http';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
-
-const starterQuestions = [
-  ['Should cities make public transit free?', 'Yes, fund it publicly', 'No, riders should pay'],
-  ['Should a four-day workweek become the standard?', 'Yes, with full pay', 'No, keep five days'],
-  ['Should social media require age verification?', 'Yes, protect minors', 'No, protect privacy'],
-  ['Should restaurants stop asking for tips?', 'Yes, include it in prices', 'No, keep tipping'],
-  ['Should AI-made content always carry a label?', 'Yes, always disclose it', 'No, context matters'],
-  ['Should voting day be a public holiday?', 'Yes, make voting easier', 'No, use other reforms'],
-  ['Should schools ban smartphones during class?', 'Yes, ban them', 'No, allow them']
-];
+import { db, ensureEdition, questionView, today, timezone } from './db.mjs';
+import { adminKey, json, fail, escapeHtml, validId, clean, voter, isAdmin, body, sameOrigin } from './http-utils.mjs';
 
 const publicDir = resolve('public');
-const dataDir = resolve(process.env.DATA_DIR || 'data');
-mkdirSync(dataDir, { recursive: true });
-const db = new DatabaseSync(join(dataDir, 'opynyn.db'));
-db.exec(`PRAGMA journal_mode=WAL;
-  PRAGMA foreign_keys=ON;
-  CREATE TABLE IF NOT EXISTS questions (
-    id INTEGER PRIMARY KEY,
-    prompt TEXT NOT NULL,
-    option_a TEXT NOT NULL,
-    option_b TEXT NOT NULL,
-    scheduled_date TEXT UNIQUE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS editions (
-    day TEXT PRIMARY KEY,
-    question_id INTEGER NOT NULL UNIQUE REFERENCES questions(id)
-  );
-  CREATE TABLE IF NOT EXISTS votes (
-    question_id INTEGER NOT NULL REFERENCES questions(id),
-    voter_id TEXT NOT NULL,
-    choice TEXT NOT NULL CHECK(choice IN ('a','b')),
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (question_id, voter_id)
-  );
-  CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY,
-    question_id INTEGER NOT NULL REFERENCES questions(id),
-    parent_id INTEGER REFERENCES comments(id) ON DELETE SET NULL,
-    voter_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    stance TEXT NOT NULL CHECK(stance IN ('a','b','unsure')),
-    body TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-  CREATE INDEX IF NOT EXISTS comments_question_idx ON comments(question_id, created_at);
-  CREATE INDEX IF NOT EXISTS comments_voter_idx ON comments(voter_id, created_at);`);
-if (db.prepare('SELECT count(*) AS n FROM questions').get().n === 0) {
-  const insert = db.prepare('INSERT INTO questions(prompt, option_a, option_b) VALUES(?, ?, ?)');
-  for (const q of starterQuestions) insert.run(...q);
-}
-
-const adminKey = process.env.ADMIN_KEY || '';
-const timezone = process.env.TZ || 'America/Edmonton';
 const port = Number(process.env.PORT || 3000);
-const dateFormat = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' });
-const today = () => {
-  const pieces = Object.fromEntries(dateFormat.formatToParts(new Date()).map(p => [p.type, p.value]));
-  return `${pieces.year}-${pieces.month}-${pieces.day}`;
-};
-const json = (res, status, value, headers = {}) => {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
-  res.end(JSON.stringify(value));
-};
-const fail = (res, status, message) => json(res, status, { error: message });
-const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-const validId = value => /^[1-9]\d*$/.test(String(value)) ? Number(value) : null;
-const clean = (value, max) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, max + 1) : '';
-
-function ensureEdition(day = today()) {
-  let q = db.prepare(`SELECT q.*, e.day FROM editions e JOIN questions q ON q.id=e.question_id WHERE e.day=?`).get(day);
-  if (q) return q;
-  const selected = db.prepare(`SELECT * FROM questions q WHERE q.id NOT IN (SELECT question_id FROM editions)
-    AND (scheduled_date IS NULL OR scheduled_date<=?)
-    ORDER BY CASE WHEN scheduled_date=? THEN 0 WHEN scheduled_date IS NULL THEN 2 ELSE 1 END, q.id LIMIT 1`).get(day, day);
-  if (!selected) return null;
-  db.prepare('INSERT OR IGNORE INTO editions(day, question_id) VALUES(?, ?)').run(day, selected.id);
-  q = db.prepare(`SELECT q.*, e.day FROM editions e JOIN questions q ON q.id=e.question_id WHERE e.day=?`).get(day);
-  return q;
-}
-
-function questionView(q, voterId) {
-  if (!q) return null;
-  const counts = db.prepare(`SELECT
-    count(*) AS total,
-    sum(CASE WHEN choice='a' THEN 1 ELSE 0 END) AS a,
-    sum(CASE WHEN choice='b' THEN 1 ELSE 0 END) AS b
-    FROM votes WHERE question_id=?`).get(q.id);
-  const mine = voterId ? db.prepare('SELECT choice FROM votes WHERE question_id=? AND voter_id=?').get(q.id, voterId) : null;
-  const commentCount = db.prepare('SELECT count(*) AS n FROM comments WHERE question_id=?').get(q.id).n;
-  return { id:q.id, day:q.day, prompt:q.prompt, options:{ a:q.option_a, b:q.option_b }, votes:{ a:counts.a || 0, b:counts.b || 0, total:counts.total }, myVote:mine?.choice || null, commentCount };
-}
-
-function voter(req, res) {
-  const value = /(?:^|;\s*)opynyn_id=([a-f0-9]{48})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
-  if (value) return value;
-  const id = randomBytes(24).toString('hex');
-  const secure = req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https';
-  res.setHeader('Set-Cookie', `opynyn_id=${id}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`);
-  return id;
-}
-
-function isAdmin(req) {
-  if (adminKey.length < 24) return false;
-  const supplied = req.headers['x-admin-key'];
-  if (typeof supplied !== 'string') return false;
-  const a = Buffer.from(supplied), b = Buffer.from(adminKey);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-async function body(req) {
-  let data = '';
-  for await (const part of req) {
-    data += part;
-    if (data.length > 16384) throw new Error('Request too large');
-  }
-  try { return JSON.parse(data || '{}'); } catch { throw new Error('Invalid JSON'); }
-}
-
-function sameOrigin(req) {
-  const origin = req.headers.origin;
-  if (!origin) return true;
-  try { return new URL(origin).host === req.headers.host; } catch { return false; }
-}
+const host = process.env.HOST || '127.0.0.1';
 
 const assets = {
   '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
@@ -253,5 +132,5 @@ export function createServer() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   if (adminKey.length < 24) console.warn('Set ADMIN_KEY to a random value of at least 24 characters to enable admin tools.');
-  createServer().listen(port, '0.0.0.0', () => console.log(`Opynyn listening on http://localhost:${port}`));
+  createServer().listen(port, host, () => console.log(`Opynyn listening on http://localhost:${port}`));
 }
