@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1e9">
+  <meta name="description" content="A new question every day. Pick a side, see the vote, and make your case.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{TITLE}} | Opynyn">
+  <meta property="og:description" content="Pick a side. Make your case. A fresh debate every day.">
+  <meta property="og:url" content="{{CANONICAL}}">
+  <title>Opynyn — one question, every perspective</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="masthead">
+      <a class="logo" href="/" aria-label="Opynyn home">opynyn<span class="logo-dot">.</span></a>
+      <div class="masthead-right"><span class="live-dot"></span> A fresh take, every day <a class="nav-link" href="#archive">Past debates ↗</a></div>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="eyebrow"><span class="tiny-rule"></span> THE DAILY DEBATE <span class="issue" id="issue">ISSUE 001</span></div>
+        <div class="intro-grid"><h1>Good questions<br><em>start something.</em></h1><p>One question a day. Two sides to choose from. Plenty of room for your own perspective.</p></div>
+      </section>
+      <section class="debate-card" aria-labelledby="question-title">
+        <div class="card-top"><div><span class="small-label">TODAY'S QUESTION</span><span class="date-label" id="date-label">LOADING...</span></div><span class="spark" aria-hidden="true">✳</span></div>
+        <h2 id="question-title">Loading today’s question…</h2>
+        <p class="question-sub">Where do you stand? Choose a side to see what everyone thinks.</p>
+        <div class="vote-options" id="vote-options"></div>
+        <p class="vote-note" id="vote-note" role="status"></p>
+        <div class="result-area" id="result-area" hidden>
+          <div class="result-heading"><span>THE ROOM SAYS</span><strong id="total-votes">0 votes</strong></div>
+          <div class="result-row"><div><b id="label-a"></b><strong id="percent-a"></strong></div><div class="result-track"><span id="bar-a"></span></div></div>
+          <div class="result-row"><div><b id="label-b"></b><strong id="percent-b"></strong></div><div class="result-track"><span id="bar-b"></span></div></div>
+        </div>
+        <div class="card-bottom"><span id="question-status">Your opinion counts.</span><button class="text-button" id="share-button" type="button">Share this debate <span aria-hidden="true">↗</span></button></div>
+      </section>
+      <section class="discussion" id="discussion">
+        <div class="section-heading"><div><div class="eyebrow"><span class="tiny-rule"></span> AFTER THE VOTE</div><h2>Make your case<span class="accent">.</span></h2></div><p>Convince someone. Learn something. Keep it respectful.</p></div>
+        <div class="discussion-grid">
+          <div class="comment-panel">
+            <h3>Add your take</h3>
+            <form id="comment-form">
+              <label for="name">YOUR NAME</label><input id="name" name="name" maxlength="32" placeholder="What should we call you?" required>
+              <label for="stance">YOUR POSITION</label><select id="stance" name="stance"><option value="a">Side A</option><option value="b">Side B</option><option value="unsure">Still deciding</option></select>
+              <label for="comment-body">YOUR ARGUMENT</label><textarea id="comment-body" name="body" maxlength="1000" rows="5" placeholder="Tell us why you see it that way…" required></textarea>
+              <input type="hidden" id="parent-id" name="parentId">
+              <p id="reply-context" class="reply-context" hidden></p>
+              <div class="form-footer"><span>Thoughtful beats loud.</span><button class="primary-button" type="submit">Post your take <span aria-hidden="true">↗</span></button></div>
+              <p class="form-message" id="form-message" role="status"></p>
+            </form>
+          </div>
+          <div class="conversation"><div class="conversation-head"><h3>The conversation</h3><span id="comment-count">0 takes</span></div><div id="comments" class="comments"><p class="empty">The first take is yours to make.</p></div></div>
+        </div>
+      </section>
+      <section class="archive" id="archive"><div class="section-heading"><div><div class="eyebrow"><span class="tiny-rule"></span> THE BACK CATALOGUE</div><h2>Yesterday's questions<span class="accent">.</span></h2></div><p>Catch up on where the conversation has been.</p></div><div class="archive-list" id="archive-list"></div></section>
+    </main>
+    <footer><a class="logo" href="/">opynyn<span class="logo-dot">.</span></a><p>A better debate begins with a better question.</p><span>ONE QUESTION. EVERY DAY.</span></footer>
+  </div>
+</body>
+</html>

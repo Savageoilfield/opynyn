@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import net from 'node:net';
+
+async function freePort() {
+  const server = net.createServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+  await new Promise(resolve => server.close(resolve));
+  return port;
+}
+
+test('daily question, voting, comments, and moderation', async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'opynyn-test-'));
+  const port = await freePort();
+  const key = 'test-admin-key-at-least-24-characters';
+  const child = spawn(process.execPath, [resolve('server.mjs')], { cwd:resolve('.'), env:{ ...process.env, DATA_DIR:dir, PORT:String(port), ADMIN_KEY:key, TZ:'America/Edmonton' }, stdio:'pipe' });
+  t.after(async () => {
+    child.kill();
+    await new Promise(resolve => child.once('exit', resolve));
+    rmSync(dir, { recursive:true, force:true });
+  });
+  const base = `http://127.0.0.1:${port}`;
+  for (let i=0; i<80; i++) {
+    try { if ((await fetch(`${base}/health`)).ok) break; } catch {}
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  const request = async (path, method='GET', data, cookie, admin=false) => {
+    const response = await fetch(`${base}${path}`, { method, headers:{ ...(data ? {'Content-Type':'application/json'} : {}), ...(cookie ? {Cookie:cookie} : {}), ...(admin ? {'X-Admin-Key':key} : {}) }, body:data ? JSON.stringify(data) : undefined });
+    return { status:response.status, cookie:response.headers.get('set-cookie'), body:await response.json() };
+  };
+  const first = await request('/api/today');
+  assert.equal(first.status,200);
+  assert.match(first.body.question.prompt,/public transit/);
+  const cookie = first.cookie.split(';')[0];
+  const qid = first.body.question.id;
+  const vote = await request('/api/votes','POST',{questionId:qid,choice:'a'},cookie);
+  assert.equal(vote.body.question.votes.total,1);
+  assert.equal(vote.body.question.myVote,'a');
+  const repeat = await request('/api/votes','POST',{questionId:qid,choice:'b'},cookie);
+  assert.equal(repeat.body.question.votes.total,1);
+  assert.equal(repeat.body.question.myVote,'a');
+  const comment = await request(`/api/questions/${qid}/comments`,'POST',{name:'Alex',stance:'a',body:'Transit should be accessible.'},cookie);
+  assert.equal(comment.status,201);
+  const listed = await request(`/api/questions/${qid}/comments`);
+  assert.equal(listed.body.comments.length,1);
+  const tooSoon = await request(`/api/questions/${qid}/comments`,'POST',{name:'Alex',stance:'a',body:'Another take.'},cookie);
+  assert.equal(tooSoon.status,429);
+  const unauthorized = await request('/api/admin/questions');
+  assert.equal(unauthorized.status,401);
+  const queued = await request('/api/admin/questions','POST',{prompt:'Should libraries stay open on Sundays?',optionA:'Yes, open them',optionB:'No, close them'},null,true);
+  assert.equal(queued.status,201);
+  const removed = await request(`/api/admin/comments/${listed.body.comments[0].id}`,'DELETE',{},null,true);
+  assert.equal(removed.status,200);
+  const after = await request(`/api/questions/${qid}/comments`);
+  assert.equal(after.body.comments.length,0);
+});
