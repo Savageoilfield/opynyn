@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import net from 'node:net';
+import { DatabaseSync } from 'node:sqlite';
 
 async function freePort() {
   const server = net.createServer();
@@ -58,4 +59,20 @@ test('daily question, voting, comments, and moderation', async t => {
   assert.equal(removed.status,200);
   const after = await request(`/api/questions/${qid}/comments`);
   assert.equal(after.body.comments.length,0);
+
+  const removeQueued = await request(`/api/admin/questions/${queued.body.id}`,'DELETE',{},null,true);
+  assert.equal(removeQueued.status,200);
+  const database = new DatabaseSync(join(dir, 'opynyn.db'));
+  database.prepare('DELETE FROM editions WHERE day=?').run(first.body.question.day);
+  const publish = database.prepare('INSERT INTO editions(day,question_id) VALUES(?,?)');
+  for (let id = 1; id <= 7; id++) publish.run(`2020-01-0${id}`,id);
+  database.close();
+  const recycled = await request('/api/today');
+  assert.equal(recycled.status,200);
+  assert.notEqual(recycled.body.question.id,qid);
+  assert.equal(recycled.body.question.prompt,first.body.question.prompt);
+  assert.equal(recycled.body.question.votes.total,0);
+  const original = await request(`/api/questions/${qid}`, 'GET', undefined, cookie);
+  assert.equal(original.body.question.votes.total,1);
+  assert.equal(original.body.question.myVote,'a');
 });

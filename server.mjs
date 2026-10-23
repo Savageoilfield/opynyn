@@ -21,7 +21,7 @@ async function handler(req, res) {
   if (req.method === 'GET' && (path === '/' || path === '/admin' || assets[path])) {
     if (assets[path]) {
       const [file, type] = assets[path];
-      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' });
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
       return res.end(readFileSync(join(publicDir, file)));
     }
     let html = readFileSync(join(publicDir, path === '/admin' ? 'admin.html' : 'index.html'), 'utf8');

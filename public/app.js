@@ -16,6 +16,10 @@ function displayDate(day) {
 
 function renderQuestion() {
   $('#question-title').textContent = question?.prompt || 'A new question is on its way.';
+  $('#question-eyebrow').textContent = isToday ? "TODAY'S QUESTION" : 'PAST DEBATE';
+  $('#question-sub').textContent = isToday ? 'Where do you stand? Choose a side to see what everyone thinks.' : 'See how people voted and what they had to say.';
+  $('#comment-panel').hidden = !isToday;
+  $('.discussion-grid').classList.toggle('past', !isToday);
   $('#date-label').textContent = question ? displayDate(question.day).toUpperCase() : 'COMING SOON';
   $('#issue').textContent = question ? `ISSUE ${String(question.id).padStart(3, '0')}` : 'ISSUE 001';
   $('#vote-options').replaceChildren();
@@ -23,6 +27,7 @@ function renderQuestion() {
   for (const choice of ['a','b']) {
     const button = el('button', `vote-button${question.myVote === choice ? ' selected' : ''}`);
     button.type = 'button'; button.disabled = !isToday || Boolean(question.myVote);
+    button.setAttribute('aria-pressed', String(question.myVote === choice));
     button.append(el('span','choice-letter',choice.toUpperCase()), el('span','choice-text',question.options[choice]));
     button.addEventListener('click', () => vote(choice));
     $('#vote-options').append(button);
@@ -60,7 +65,7 @@ function commentNode(comment, byId) {
   article.append(el('p','',comment.body));
   if (isToday) {
     const reply = el('button','reply-button','Reply ↗'); reply.type = 'button';
-    reply.addEventListener('click', () => { $('#parent-id').value = comment.id; $('#reply-context').textContent = `Replying to ${comment.name} · click to cancel`; $('#reply-context').hidden = false; $('#comment-body').focus(); });
+    reply.addEventListener('click', () => { $('#parent-id').value = comment.id; $('#reply-context').textContent = `Replying to ${comment.name} · cancel reply`; $('#reply-context').hidden = false; $('#comment-body').focus(); });
     article.append(reply);
   }
   return article;
@@ -71,7 +76,7 @@ async function loadComments() {
   const rows = (await api(`/api/questions/${question.id}/comments`)).comments;
   $('#comment-count').textContent = `${rows.length} take${rows.length === 1 ? '' : 's'}`;
   const box = $('#comments'); box.replaceChildren();
-  if (!rows.length) return box.append(el('p','empty','The first take is yours to make.'));
+  if (!rows.length) return box.append(el('p','empty',isToday ? 'The first take is yours to make.' : 'No takes were posted for this debate.'));
   const byId = new Map(rows.map(row => [row.id,row]));
   rows.forEach(row => box.append(commentNode(row, byId)));
 }

@@ -14,7 +14,7 @@ To stop: `docker compose down`. To start again: `docker compose up -d`. To see l
 
 Questions, votes, and comments live in the ignored `data/` directory and survive restarts or switching between Node and Docker. Back up that directory before moving to another machine.
 
-The first seven questions are starter prompts. The first visit each day publishes the next available prompt. A question scheduled for a specific day takes priority on that day. The local day follows the `TZ` value in `.env` (default `America/Edmonton`). Past debates remain readable; voting and commenting close when the day ends.
+The first seven questions are starter prompts. The first visit each day publishes the next available prompt. A question scheduled for a specific day takes priority on that day. When the queue runs out, the oldest published question is reused as a new edition so the site keeps running; its previous votes and comments stay with the original edition. Add fresh prompts in the admin page to keep the conversation varied. The local day follows the `TZ` value in `.env` (default `America/Edmonton`). Past debates remain readable; voting and commenting close when the day ends.
 
 Sharing copies or opens a link to the question. `localhost` links only work on your own computer. To invite people from social media, put this container behind a public HTTPS address, set `PUBLIC_URL` in `.env` to that address, and rebuild/restart. Use a domain and reverse proxy or a hosting provider; do not expose the admin key. If using a reverse proxy, forward the original `Host` header and HTTPS scheme.
 

@@ -62,10 +62,17 @@ const today = () => {
 function ensureEdition(day = today()) {
   let q = db.prepare(`SELECT q.*, e.day FROM editions e JOIN questions q ON q.id=e.question_id WHERE e.day=?`).get(day);
   if (q) return q;
-  const selected = db.prepare(`SELECT * FROM questions q WHERE q.id NOT IN (SELECT question_id FROM editions)
+  let selected = db.prepare(`SELECT * FROM questions q WHERE q.id NOT IN (SELECT question_id FROM editions)
     AND (scheduled_date IS NULL OR scheduled_date<=?)
     ORDER BY CASE WHEN scheduled_date=? THEN 0 WHEN scheduled_date IS NULL THEN 2 ELSE 1 END, q.id LIMIT 1`).get(day, day);
-  if (!selected) return null;
+  if (!selected) {
+    const oldest = db.prepare(`SELECT q.prompt, q.option_a, q.option_b FROM editions e
+      JOIN questions q ON q.id=e.question_id ORDER BY e.day ASC LIMIT 1`).get();
+    if (!oldest) return null;
+    const result = db.prepare('INSERT INTO questions(prompt,option_a,option_b) VALUES(?,?,?)')
+      .run(oldest.prompt, oldest.option_a, oldest.option_b);
+    selected = { id: Number(result.lastInsertRowid) };
+  }
   db.prepare('INSERT OR IGNORE INTO editions(day, question_id) VALUES(?, ?)').run(day, selected.id);
   q = db.prepare(`SELECT q.*, e.day FROM editions e JOIN questions q ON q.id=e.question_id WHERE e.day=?`).get(day);
   return q;

@@ -281,6 +281,9 @@ a {
   border-top:1px solid var(--line);
   padding-top:37px
 }
+.discussion-grid.past {
+  grid-template-columns:1fr
+}
 .comment-panel {
   background:#e9eadf;
   padding:32px
@@ -339,11 +342,27 @@ a {
   margin:12px 0 0
 }
 .reply-context {
+  display:block;
+  width:100%;
+  border:0;
+  text-align:left;
+  cursor:pointer;
   font-size:13px;
   color:var(--green);
   background:var(--lime);
   padding:10px;
   margin:12px 0 0
+}
+.reply-context[hidden] {
+  display:none
+}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {
+  outline:3px solid var(--orange);
+  outline-offset:3px
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior:auto }
+  .vote-button,.result-track span { transition:none }
 }
 .conversation-head {
   padding:3px 0 18px;
